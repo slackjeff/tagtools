@@ -1,0 +1,113 @@
+#!/bin/sh
+#========HEADER==============================================================|
+#AUTOR
+# Jefferson Rocha <root@slackjeff.com.br>
+
+#Programa
+# tagtools
+
+#Descrição
+# Cria o o diretório 'tagfile' cria suas respectivas séries e baixa
+# o tagfile de cada série.
+# O mirror é o oficial do Slackware, com suporte a mirrors de 32 e 64 bits
+
+#Licença
+# MIT
+# https://notabug.org/jeffersonrocha/tagtool/src/master/LICENSE
+
+#CHANGELOG
+# V 1.1 - Jefferson Rocha 04/10/2018
+#  -Inserido menu interativo com os mirrors
+#============================================================================|
+
+#=======VARS
+version='1.1'
+archive_name='tagfile'
+dir="${HOME}/tagfiles"
+
+# Caso Deseja fazer o processo automatico
+# e não exibir o menu interativo de links
+# set a variável 'setlink' com o número
+# do mirror desejavel.
+setlink=''
+link=( # MIRRORS DISPONIVEIS.
+   # X86
+   [0]='https://mirrors.slackware.com/slackware/slackware-11.0/slackware/'
+   [1]='https://mirrors.slackware.com/slackware/slackware-12.0/slackware/'
+   [2]='https://mirrors.slackware.com/slackware/slackware-12.1/slackware/'
+   [3]='https://mirrors.slackware.com/slackware/slackware-12.2/slackware/'
+   [4]='https://mirrors.slackware.com/slackware/slackware-13.0/slackware/'
+   [5]='https://mirrors.slackware.com/slackware/slackware-13.1/slackware/'
+   [6]='https://mirrors.slackware.com/slackware/slackware-13.37/slackware/'
+   [7]='https://mirrors.slackware.com/slackware/slackware-14.0/slackware/'
+   [8]='https://mirrors.slackware.com/slackware/slackware-14.1/slackware/'
+   [9]='https://mirrors.slackware.com/slackware/slackware-14.2/slackware/'
+   [10]='https://mirrors.slackware.com/slackware/slackware-current/slackware/'
+
+   # X86_64
+   [11]='https://mirrors.slackware.com/slackware/slackware64-13.0/slackware64/'
+   [12]='https://mirrors.slackware.com/slackware/slackware64-13.1/slackware64/'
+   [13]='https://mirrors.slackware.com/slackware/slackware64-13.37/slackware64/'
+   [14]='https://mirrors.slackware.com/slackware/slackware64-14.0/slackware64/'
+   [15]='https://mirrors.slackware.com/slackware/slackware64-14.1/slackware64/'
+   [16]='https://mirrors.slackware.com/slackware/slackware64-14.2/slackware64/'
+   [17]='https://mirrors.slackware.com/slackware/slackware64-current/slackware64/'
+)
+
+#========TESTE
+# Verificação se deve ou não
+# mostrar o menu interativo para o usuário.
+# se caso a variável setlink esta setada
+# com algum mirror o menu interativo não roda.
+# e vai direto para o ponto G ~:)
+[ "$setlink" ] && active='1'
+
+
+#========INICIO
+
+if [ "$active" = '1' ]; then
+   echo -e "Mirror Active in Script, SKIP interactive menu.\n"
+else
+   i='0'
+   for print in "${link[@]}"; do
+      if [ "$i" = '0' ]; then
+         echo "==========> X86"
+      elif [ "$i" = '11' ]; then
+         echo -e "\n==========> X86_64"
+      fi
+      echo "[${i}] - $print"
+      i=$((i + 1)) # Incremento
+   done
+   read -p $'\nSelect a Mirror/Number: ' setlink
+   # Entrada nula?
+   [ "$setlink" ] || { echo "You not selected any Mirror."; exit 1;}
+fi
+
+# Cortando a / do link
+link="${link[$setlink]%/}"
+
+series=( # Todas Series de a~y
+  'a'   'ap'   'd'
+  'e'   'f'    'k'
+  'kde' 'kdei' 'l'
+  'n'   't'    'tcl'
+  'x'   'xap'  'xfce'
+  'y'
+)
+
+# Criando o diretorio tagfiles
+# no home do usuário.
+[ ! -d "$dir" ] && { mkdir "$dir"; echo "==========>${dir} created.";}
+
+cd "$dir"
+echo "==========> INITIALIZING DOWNLOAD.\n"
+echo -e "Mirror: ${link}\n"
+for serie in "${series[@]}"; do
+    # Criando diretório da série
+   [ ! -d "$serie" ] && mkdir "$serie"
+   # Download da serie, deu pau para.
+   wget -q --show-progress "${link}/${serie}/${archive_name}"  \
+   -O "${serie}/${archive_name}" || { echo "ERROR in serie: ${serie}"; exit 1;}
+done
+
+echo -e "\n==========> OK, COMPLETED.\n"
